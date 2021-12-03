@@ -1,0 +1,145 @@
+---
+title: "Final-Project"
+author: "Anna Stein, Tatev Gomstyan, Aishwarya Gavili"
+date: "12/1/2021"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+#install.packages("tidytext")
+library(tidytext)
+#install.packages("ggwordcloud")
+library(ggwordcloud)
+#install.packages("gutenbergr") 
+library(gutenbergr)
+#install.packages('textdata')
+library(textdata)
+#save.image("tidytext.RData")
+```
+
+```{r}
+# import data
+vax_data = read.csv("/Users/Anna/Downloads/covidvaccine.csv")
+```
+
+```{r}
+# the dataframe currently has over 300,000 observations. This is a massive dataframe. We don't need that many rows. 
+vax_data = vax_data[(1:30000),]
+View(vax_data) # took 10% of the dataframe 
+```
+Here, we took 10% of the dataframe to use for this project. This is a much more manageable number of observations.
+
+Take out unnecessary columns: 
+Just leave the text and whether or not they're verified? 
+```{r}
+# can take out username
+# can take out location: since users are inputting their own locations, the data here is not easily organizable
+# user description: another thing that users input for themselves. 
+# can take out user-created, user followers, user friends, user favorites, source, is_retweet
+# ^ can take these out because they aren't the actual text of the tweet 
+vax_data = vax_data[,c(-1,-2,-3,-4,-5,-6,-7,-9,-11,-12,-13)]
+View(vax_data) # now its just the text of the tweet, and whether or not the user is verified 
+
+str(vax_data) # both columns are characters
+
+# split into 2 dataframes: verified users and non-verified users (?)
+ver_vax = vax_data[vax_data$user_verified == "True",]
+View(ver_vax) # dataframe of all verified users 
+  
+  
+nonver_vax = vax_data[vax_data$user_verified == "False",]
+View(nonver_vax) # only tweets from non-verified users
+```
+
+```{r}
+ver_vax <- ver_vax %>%
+  unnest_tokens(word, text)%>%
+  anti_join(stop_words)%>% # took out stop words
+  count(word, sort=TRUE)
+View(ver_vax) # this broke up the tweets by verified users into words 
+# should we take out the numbers? 
+
+nonver_vax <- nonver_vax %>%
+  unnest_tokens(word, text)%>%
+  anti_join(stop_words)%>% 
+  count(word, sort=TRUE)
+View(nonver_vax)
+```
+
+
+Begin sentiment analysis:
+```{r}
+get_sentiments('afinn') # number scale from negative to positive 
+get_sentiments('bing') # negative and positive 
+get_sentiments('nrc') # more nuanced sentiment labels
+```
+
+```{r}
+# We are going to run all 3 forms of sentiment analysis for tweets from verified users, and then tweets from unverified users. 
+
+# Tweets from verified users: 
+ver_sent_affin <- ver_vax %>%
+  inner_join(get_sentiments("afinn"))
+View(ver_sent_affin)
+
+ver_sent_bing <- ver_vax%>%
+  inner_join(get_sentiments("bing"))
+View(ver_sent_bing)
+
+ver_sent_nrc <- ver_vax%>%
+  inner_join(get_sentiments("nrc"))
+View(ver_sent_nrc)
+```
+
+
+```{r}
+# Tweets from unverified users: 
+nonver_sent_affin <- nonver_vax %>%
+  inner_join(get_sentiments("afinn"))
+View(nonver_sent_affin)
+
+nonver_sent_bing <- nonver_vax%>%
+  inner_join(get_sentiments("bing"))
+View(nonver_sent_bing)
+
+nonver_sent_nrc <- nonver_vax%>%
+  inner_join(get_sentiments("nrc"))
+View(nonver_sent_nrc)
+```
+
+
+```{r}
+# Lets look at the sentiment analysis
+table(ver_sent_affin$value) # can make a graph for these affin 
+table(nonver_sent_affin$value)
+
+ggplot(data = ver_sent_affin, 
+       aes(x=value)
+        )+
+  geom_histogram()+
+  ggtitle("Verified Tweets Sentiment Range")+
+  theme_minimal()
+
+ggplot(data = nonver_sent_affin, 
+       aes(x=value)
+        )+
+  geom_histogram()+
+  ggtitle("Unverified Tweets Sentiment Range")+
+  theme_minimal()
+
+
+table(ver_sent_bing$sentiment)
+table(nonver_sent_bing$sentiment)
+
+table(ver_sent_nrc$sentiment)
+table(nonver_sent_nrc$sentiment)
+```
+
+
