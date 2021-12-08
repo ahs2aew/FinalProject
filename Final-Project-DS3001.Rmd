@@ -37,7 +37,8 @@ Question: Are verified users more likely to show stronger sentiments towards the
 
 ```{r}
 # import data
-vax_data = read.csv("/Users/aishgav/Desktop/ds3001/covidvaccine.csv")
+vax_data = read.csv("/Users/Student/Desktop/covidvaccine.csv")
+View(vax_data)
 ```
 
 Here, we took 10% of the dataframe to use for this project. This is a much more manageable number of observations.
@@ -251,4 +252,97 @@ ggplot(nonver_sent_nrc_cleaned[1:50,], aes(label = word,  size = n,color = senti
 #alot of anticipation and political bc election
 ```
 
+```{r}
+View(vax_data)
+vax_data_verified <- vax_data[vax_data$user_verified == "True",]
+vax_data_verified_clean <- tibble(tweet = vax_data_verified[,2])
+vax_data_unverified <- vax_data[vax_data$user_verified == "False",]
+vax_data_unverified_clean <- tibble(tweet = vax_data_unverified[,2])
+
+```
+
+```{r}
+#Tf-idf
+#Here we are going to treat each of our tweets as a document in a corpus and explore the relative importance of words to these tweets as compared to the overall corpus. 
+
+#pulling up raw data 
+
+#write.csv(vax_data_verified_clean,"/Users/Student/Desktop//vervax.csv", row.names = FALSE )
+#write.csv(vax_data_unverified_clean,"/Users/Student/Desktop//nonvervax.csv", row.names = FALSE )
+
+ver_raw <- vax_data_verified_clean #as.tibble(read_lines("/Users/Student/Desktop//vervax.csv"))
+nonver_raw <- vax_data_unverified_clean #as.tibble(read_lines("/Users/Student/Desktop//nonvervax.csv"))
+
+data_prep <- function(x,y,z){
+  i <- as_tibble(t(x))#transposing the data set
+  ii <- unite(i,"text",y:z,remove = TRUE,sep = "")
+}
+
+#get rid of NAs/keep only alphanumeric values
+#
+
+#nonver_vax$word = gsub("[^[:alnum:]]", "", nonver_vax$word)
+
+ver_vax_bag <- data_prep(ver_raw,'V1','V2174')
+ver_vax_bag$text <- gsub("[^[:alnum:][:space:]]", "", ver_vax_bag$text)
+  
+label <- "verified"
+ver_vax_1 <- tibble(label,ver_vax)
+
+ver_vax_1$word = gsub("[^[:alnum:]]", "", ver_vax_1$word)
+ver_vax_1 <- ver_vax_1[-c(1, 2, 6, 7, 17), ]
+
+nonver_vax_bag <- data_prep(nonver_raw, 'V1','V27823')
+nonver_vax_bag$text <- gsub("[^[:alnum:][:space:]]", "", nonver_vax_bag$text)
+
+label <- "unverified"
+nonver_vax1 <- tibble(label, nonver_vax)
+
+nonver_vax1$word = gsub("[^[:alnum:]]", "", nonver_vax1$word)
+nonver_vax1 <- nonver_vax1[-c(1, 2, 6, 7, 17, 19, 20), ]
+
+xxx <- rbind(ver_vax_1,nonver_vax1)
+
+verification <- c("Verified", "Unverified")
+
+tf_idf_text_1 <- tibble(verification,text=t(tibble(ver_vax_bag,nonver_vax_bag,.name_repair = "universal")))
+
+word_count <- tf_idf_text_1 %>%
+  unnest_tokens(word, text) %>%
+  count(verification, word, sort = TRUE)
+
+total_words <- word_count %>% 
+  group_by(verification) %>% 
+  summarize(total = sum(n))
+
+tweets <- inner_join(word_count, total_words)
+
+tweets <- tweets %>%
+  bind_tf_idf(word, verification, n)
+
+
+```
+
+
 # Summary
+
+Background and Previous Research: 
+Previous research: Misinformation relating to COVID-19 and the COVID-19 vaccine has been a salient issue since the onset of the pandemic. One major way that this misinformation has spread has been through social media channels such as Facebook and Twitter. In 2020, BBC reported that “social media has been a fertile ground for [Covid-19] conspiracy theories”(https://www.littlelaw.co.uk/2021/01/16/littlelaw-looks-atmisinformation-and-the-covid-19-vaccine/). 
+
+Having been aware of this as users of social media, we decided to examine a dataset of Tweets from 2020 relating to the COVID-19 vaccine. We wanted to see if there are differences in sentiment towards the vaccine among different groups (verified v non-verified individuals). We figured that sentiment analysis, paired with our background knowledge and other research on the topic, could prove to be a useful tool in diving further into the types of narratives being spread on social media, regarding COVID-19 vaccines. 
+
+Methods:
+We began with a dataframe of over 300,000 tweets that contain the hashtag: #CovidVaccine. We decided that we won’t need nearly 300,000 rows for our analysis - this would be far too computationally expensive. We decided to cut down our dataset to 30,000 rows, essentially by 10%. We did some data cleaning, and took out the columns we didn’t need. We moved forward with only the columns that contain the Tweet text, and one that states whether or not the user is verified on Twitter. We made 2 dataframes: one for verified users, and one for unverified users. W e used 3 different types of sentiment analysis. We decided to do this so that we could represent the sentiments both numerically and categorically, as well as examine sentiments of different strengths. For example, we could use simple negative/positive categories for each word in the Tweets, or we could look at a range of sentiments, such as joy, fear, anticipation, etc. 
+Once we performed the sentiment analysis, we decided to create graphs to help visualize the output. We created histograms and wordclouds. 
+
+Fairness Assessment: 
+We do not believe that we need to conduct a fairness assessment for this project. The classes we used here are verified vs. unverified Twitter users, which is not a protected class in society.
+
+# Analysis 
+
+
+
+
+
+
+
