@@ -1,7 +1,7 @@
 ---
-title: "Final-Project"
+title: "Covid Vaccine Tweet Sentiment Analysis"
 author: "Anna Stein, Tatev Gomstyan, Aishwarya Gavili"
-date: "12/1/2021"
+date: "12/7/2021"
 output:
   html_document:
     toc: yes
@@ -28,71 +28,142 @@ library(gutenbergr)
 #install.packages('textdata')
 library(textdata)
 #save.image("tidytext.RData")
+library(lemon)
+library(plotly)
 ```
 
-Question: Are verified users more likely to show stronger sentiments towards the vaccine or toned down sentiments towards the vaccine?  Since most verified users are public figures, they may be either very vocal on their opinions regarding such a controversial topic or filter themselves to please the public or their followers. Consequently by doing the analysis below, we are trying to figure out whether their tweets reflect very strong sentiments through strong and persuasive language or whether their tweets are very general and not too political towards the topic of COVID vaccines.  Similarly, we are trying to see verified users showed more positive sentiments as a whole in comparison to unverified users.
+# Background and Research 
+
+## Previous Research
+
+Misinformation relating to COVID-19 and the COVID-19 vaccine has been a salient issue since the onset of the pandemic. One major way that this misinformation has spread has been through social media channels such as Facebook and Twitter. In 2020, BBC reported that “social media has been a fertile ground for [Covid-19] conspiracy theories”(https://www.littlelaw.co.uk/2021/01/16/littlelaw-looks-atmisinformation-and-the-covid-19-vaccine/). 
+
+## Question and Goals
+**Question:** Are verified users more likely to show stronger sentiments towards the vaccine or toned down sentiments towards the vaccine?  Since most verified users are public figures, they may be either very vocal on their opinions regarding such a controversial topic or filter themselves to please the public or their followers. Consequently by doing the analysis below, we are trying to figure out whether their tweets reflect very strong sentiments through strong and persuasive language or whether their tweets are very general and not too political towards the topic of COVID vaccines.  Similarly, we are trying to see verified users showed more positive sentiments as a whole in comparison to unverified users.
+
+In order to be verified on Twitter, one must meet a set of qualifications.  Their general rule is that an account must be authentic, notable, and active. You have to provide official documents of identification to be considered ‘authentic’. To be notable, you have to be associated with a prominently recognized individual or brand. There are a variety of categories of who/what is considered notable: governmental figures, companies, news organizations/journalists, to name a few. Your verification status can be revoked if you breach Twitter’s guidelines of use. 
+Unverified users, on the other hand, could be anyone. 
+
+Our initial thoughts were that verified users could have weaker sentiments towards the vaccine -- weaker as in less emotional, less explosive. However, it could easily go the other way, and people with a large following could feel more empowered to speak their minds more strongly about the vaccine. 
+To begin our analysis, we used a Kaggle data set that contained tweets that have a #CovidVaccine hashtag, collected from 1/8/2020 and that were updated on a daily basis: [https://www.kaggle.com/kaushiksuresh147/covidvaccine-tweets]
+
+# Exploratory Analysis 
+
+We began with a data frame of over 300,000 tweets. We decided that we won’t need nearly 300,000 rows for our analysis - this would be far too computationally expensive. We decided to cut down our dataset to 30,000 rows, essentially by 10%. We did some data cleaning, and took out the columns we didn’t need. We moved forward with only the columns that contain the Tweet text, and one that states whether or not the user is verified on Twitter. We made 2 dataframes: one for verified users, and one for unverified users. We used 3 different types of sentiment analysis. We decided to do this so that we could represent the sentiments both numerically and categorically, as well as examine sentiments of different strengths.
 
 
-# Data cleaning
 
-```{r}
+## Data cleaning
+
+```{r, echo = F, results = 'hide', messages='hide'}
 # import data
-vax_data = read.csv("/Users/Student/Desktop/covidvaccine.csv")
-View(vax_data)
+vax_data = read.csv("/Users/aishgav/Desktop/ds3001/covidvaccine.csv")
+vax_data = vax_data[vax_data$user_verified == "True" | vax_data$user_verified == "False", ] 
+orig_vax_data = vax_data
+orig_vax_data$user_favourites <- as.numeric(orig_vax_data$user_favourites)
 ```
 
 Here, we took 10% of the dataframe to use for this project. This is a much more manageable number of observations.
 ```{r}
-# the dataframe currently has over 300,000 observations. This is a massive dataframe. We don't need that many rows. 
+# the dataframe currently has over 300,000 observations. We used 30,000 observations. 
 vax_data = vax_data[(1:30000),]
 # took 10% of the dataframe 
 ```
 
 
-```{r}
-# can take out username
-# can take out location: since users are inputting their own locations, the data here is not easily organizable
-# user description: another thing that users input for themselves. 
-# can take out user-created, user followers, user friends, user favorites, source, is_retweet
-# ^ can take these out because they aren't the actual text of the tweet 
-vax_data = vax_data[,c(-1,-2,-3,-4,-5,-6,-7,-9,-11,-12,-13)]
-# now its just the text of the tweet, and whether or not the user is verified 
-
-str(vax_data) # both columns are characters
-
-# split into 2 dataframes: verified users and non-verified users (?)
-ver_vax = vax_data[vax_data$user_verified == "True",]
-# dataframe of all verified users 
-  
-  
-nonver_vax = vax_data[vax_data$user_verified == "False",]
-# only tweets from non-verified users
+```{r, echo = F, results = 'hide', messages='hide'}
+vax_data = vax_data[,c(-1,-2,-3,-4,-5,-6,-7,-9,-11,-12,-13)] # removing columns other than tweet and verification status
 ```
 
 ```{r}
+str(vax_data) # both columns are characters
+
+# split into 2 dataframes: verified users and non-verified users
+ver_vax = vax_data[vax_data$user_verified == "True",]
+nonver_vax = vax_data[vax_data$user_verified == "False",]
+
+```
+
+<center>
+![](/Users/aishgav/Desktop/Screen Shot 2021-12-08 at 8.17.38 PM.png){width=50%}
+
+<p>
+</p>
+
+<p>
+</p>
+![](/Users/aishgav/Desktop/Screen Shot 2021-12-08 at 8.17.53 PM.png){width=50%}
+</center>
+
+
+
+<p>
+</p>
+<p>
+</p>
+<p>
+</p>
+
+
+**Prevalence** is .07247391 or ~7.25%, meaning 7.25% of our sample data contains tweets from verified users. This is a representative sample as the proportion of verified users from the original data with 300,000 is around 10%.
+
+```{r}
+#Verified users will be the positive class 
+
+nrow(ver_vax) /(nrow(ver_vax) + nrow(nonver_vax))
+
+```
+
+
+```{r}
+library(vtree)
+vtree(orig_vax_data, "user_verified" )
+```
+
+
+**Frequency of all words seen in tweets:** 
+
+```{r}
+# this broke up the tweets by verified users into words and counted their frequencies 
+
 ver_vax <- ver_vax %>%
   unnest_tokens(word, text)%>%
   anti_join(stop_words)%>% # took out stop words
   count(word, sort=TRUE)
-# this broke up the tweets by verified users into words 
-# should we take out the numbers? 
+
 
 nonver_vax <- nonver_vax %>%
   unnest_tokens(word, text)%>%
-  anti_join(stop_words)%>% 
+  anti_join(stop_words)%>% # took out stop words
   count(word, sort=TRUE)
+
+head(ver_vax)
+head(nonver_vax)
 
 ```
 
-# Sentiment Analysis
 
-```{r}
+
+# Methods: Sentiment Analysis
+
+For both verified and unverified tweets, we used 3 types of sentiment analysis: affin, bing, and nrc. The affin method for sentiment analysis contains a positive and negative scale - it gives us an idea of the direction of the sentiment for a word in a tweet, as well as the strength of that positive or negative seniment. This helps tie into our initial question of (1) are there differences in strength of sentiment between tweets about the COVID-19 vaccine from verified and unverified users, as well as (2) are there differences in positivity/negativity of sentiment towards COVID-19 vaccines among verified and unverified Twitter users. For the Big method, there are only 2 categories here: positive and negative. This will help us answer our question about whether Tweets from verified and unverified users speak more positively or negatively about COVID-19 vaccines. Lastly, the NRC analysis gives us a wider range of sentiments. It will be great for answering our question - it will give us an idea of positive and negative sentiments, as well as the strength of those sentiments (for example, instead of just negative, we can look at anger/disgust/fear/etc.) 
+
+
+```{r, echo = T, results = 'hide', messages='hide'}
 get_sentiments('afinn') # number scale from negative to positive 
 get_sentiments('bing') # negative and positive 
 get_sentiments('nrc') # more nuanced sentiment labels
 ```
 
-# Verified users
+## Verified users
+
+* Affin, verified: From our initial application of affin text analysis to verified tweets, we see most of the sentiments are around 0, which means most of the tweets from verified users were either slightly negative or slightly positive towards the COVID-19 vaccine. There are a bit more tweets with an affin sentiment of 2, which is a slightly/moderately positive sentiment. From affin, it looks like tweets from verified users about the COVID-19 vaccine skew slightly to moderately positive. We will also visualize this using a histogram. 
+
+* Bing, verified: If verified tweets are split up into negative and positive, it looks like there is a pretty even split between positive and negative. This echoes what we found in affin, with somewhat of a balance between negative and positive. 
+
+* Nrc, verified: The categories that the most words from these verified Tweets fall into are: positive, negative, trust, and anticipation. The negative/positive part echoes what we’ve found with affin and bing. However, the trust and anticipation parts are new -- it seems that verified users, at the time that these tweets were tweeted (late 2020), were expressing trust towards the vaccine, and anticipation for its development/rollout. Verified twitter users tend to be public figures, and Twitter has a list of requirements to become verified. These verified users could include public health officials and certain governmental figures, who have tended to spread messages about trusting the COVID-19 vaccine since 2020. It will be interesting to see if there is less trust towards the COVID-19 vaccine for unverified Twitter users. 
+
+
 ```{r}
 # We are going to run all 3 forms of sentiment analysis for tweets from verified users, and then tweets from unverified users. 
 
@@ -113,16 +184,19 @@ table(ver_sent_nrc$sentiment)
 
 ```
 
-```{r}
+```{r, echo = F, results = 'hide', messages='hide'}
 #remove duplicate words 
 ver_sent_nrc_cleaned <- ver_sent_nrc[!duplicated(ver_sent_nrc$word), ]
 ```
 
-## Plots 
+### Plots 
 
-### Histograms
+#### Histograms
 
-#### Affin
+##### Affin
+
+The verified sentiment range histogram using Affin demonstrates that there isn’t too much of an imbalance between the number of positive and negative sentiment tweets.  Although, the positive tweets outweigh the negative,  the difference is not by much.  Additionally, the graph reflects that within the negative tweets (values < 0), a majority of those tweets fall into the midrange of tweets in terms of negativity.  Similarly, the positive tweets parallel this by having the majority also fall into its midrange of tweets.  In other words, even if tweets express a positive or negative sentiment, those sentiments are not too strong, which could be the result of wording (filtering) or length of tweets. 
+
 ```{r}
 # Lets look at the sentiment analysis
 
@@ -135,7 +209,9 @@ ggplot(data = ver_sent_affin,
 
 ```
 
-#### NRC (1) 
+##### NRC (1) 
+
+The histogram of verified tweet sentiment frequency using NRC shows that out of all the words that made up the corpus of verified tweets, a majority of words contained sentiments that were positive and anticipation.  Negative sentiments were not as present with regards to dislike or hate.  Positive sentiments can be attributed to the fact that verified users tend to have a following which they try to cater comfort and relatability too.  For this reason,  a lot of words used could’ve had intentions of providing a sense of community, comfort, and hope.  Tweets of anticipation could be attributed to not knowing how effective the vaccine was. 
 
 ```{r}
 ggplot(data = ver_sent_nrc, 
@@ -148,20 +224,13 @@ ggplot(data = ver_sent_nrc,
 ```
 
 
-#### NRC (2)
-```{r}
-numwords_per_sentiment_ver <- aggregate(ver_sent_nrc_cleaned$n, by=list(Sentiment=ver_sent_nrc_cleaned$sentiment), FUN=sum)
+#### Wordclouds
 
-ggplot(data = numwords_per_sentiment_ver, 
-       aes(x=Sentiment, y=x)
-        )+
-  geom_bar(stat="identity")+
-  ggtitle("Total number of Words vs Sentiment (Verified)")+
-  theme_minimal() + labs(y ="Number of Words")+theme(plot.title = element_text(hjust = 0.5))
 
-```
+Word cloud for Verified: The most-used word is, unsurprisingly, vaccine. Other words that were used at a high frequency by verified users were positive, as shown by the key. Some of these words include ‘effective’, ‘efficacy’, and ‘safe’. Some of the other highly used words were politics-related, such as ‘president’, ‘candidate’, or ‘government’. It makes sense that these users were speaking about the vaccine in a political context, as it was late 2020, around the time of the election. Something interesting to note here is that the nrc analysis we used to make the word cloud classified ‘trump’ as a word of surprise -- it did not pick up on trump as referring to Donald Trump. 
 
-### Wordclouds
+In reference to our question, we can use this word cloud to illustrate that a lot of the frequently used words by verified users in tweets about COVID-19 were on the positive side, with many being in the anticipatory and trust category. 
+
 
 ```{r}
 
@@ -169,11 +238,17 @@ set.seed(42)
 ggplot(ver_sent_nrc_cleaned[1:50,], aes(label = word, size = n, color = sentiment)
        ) +
   geom_text_wordcloud(show.legend = TRUE) +
-  theme_minimal()+ggtitle("Unverified")+theme(plot.title = element_text(hjust = 0.5))
+  theme_minimal()+ggtitle("Verified")+theme(plot.title = element_text(hjust = 0.5))
 
 ```
 
-# Unverified users 
+## Unverified users 
+
+* Affin, unverified: Here, we can examine the strength and direction of sentiments for Tweets from unverified users about the COVID-19 vaccine. First, we noticed that there are a lot more tweets from unverified users. We also noticed that the affin sentiment from these users towards the vaccine tend to skew slightly to moderately negative. A majority of the tweets are in the (-2) category, whereas the majority of tweets for verified users were in the 2 category. Here is a noticeable difference as compared to the verified tweets. When we use nrc, we can get a better idea of the types of negative sentiments present in these tweets. 
+
+* Bing, unverified: This shows an imbalance in favor of negative sentiment Tweets. It does not tell us anything about the strength of sentiment.
+
+* Nrc, unverified: The majority of tweets fall into the positive and negative catgories here, and after that, we see the largest categories as: trust, fear, anger, and sadness. This is different from our verified tweets -- there is more of a range of emotion here, still leaning towards negative sentiment. It is important to note that these sentiments such as anger and sadness could either be towards the COVID-19 vaccine, or towards the pandemic in general - would people really feel sadness over a vaccine that is still being developed? An emotion like fear might make more sense. It makes sense that fear would be towards the vaccine, since these tweets were from late 2020, when so much about the vaccine and the pandemic was still uncertain.  
 
 ```{r}
 # Tweets from unverified users: 
@@ -201,11 +276,14 @@ nonver_sent_nrc_cleaned <- nonver_sent_nrc[!duplicated(nonver_sent_nrc$word), ]
 ```
 
 
-## Plots 
+### Plots 
 
-### Histograms
+#### Histograms
 
-#### Affin
+##### Affin
+
+The unverified sentiment range histogram using Affin demonstrates that tweets of negative sentiment (values < 0) occur significantly more frequently than positive tweets.   In fact most tweets fell between the range of -1.25 and -2.5.  This could be attributed to the fact that unverified users don’t feel the need to filter themselves due to their almost anonymous status; it is unlikely for them to face backlash from a negative or inappropriate tweet.  Similar to the verified tweets negative majority, the majority of negative tweets also fell into the midrange.  
+
 ```{r}
 ggplot(data = nonver_sent_affin, 
        aes(x=value)
@@ -215,7 +293,9 @@ ggplot(data = nonver_sent_affin,
   theme_minimal()+theme(plot.title = element_text(hjust = 0.5))
 ```
 
-#### NRC (1)
+##### NRC (1)
+
+The histogram of unverified tweet sentiment frequency using NRC was more evenly distributed between sentiments.  However, negative sentiments followed by positive sentiments were the majority.  Tweets could’ve fallen into more sentiments because of how a larger population is represented by unverified users compared to verified users.  Again, the large portion of negative tweets can be attributed to not feeling the need to filter.  
 
 ```{r}
 ggplot(data = nonver_sent_nrc, 
@@ -227,21 +307,11 @@ ggplot(data = nonver_sent_nrc,
 
 ```
 
-#### NRC (2)
 
-```{r}
-numwords_per_sentiment_nonver <- aggregate(nonver_sent_nrc_cleaned$n, by=list(Sentiment=nonver_sent_nrc_cleaned$sentiment), FUN=sum)
+#### Wordcloud
 
-ggplot(data = numwords_per_sentiment_nonver, 
-       aes(x=Sentiment, y=x)
-        )+
-  geom_bar(stat="identity")+
-  ggtitle("Total number of Words vs Sentiment (Unverified)")+
-  theme_minimal() + labs(y ="Number of Words")+theme(plot.title = element_text(hjust = 0.5))
+Here there is a mix of sentiments, both positive and negative. There were many anticipatory words that were frequently used, similarly to the other word cloud. This makes sense, as these Tweets are from before a COVID-19 vaccine was widely available. This wordcloud also illustrates that more ‘emotinoal’ words were used by unverified users with regards to the vaccine, such as: ‘happy’, ‘love’, and ‘finally’. It is interesting to note that these are more positive words, however, when we ran the other sentiment analysis, it appeared that the sentiment of Tweets for unverified users skewed slightly negative. This could be because even though these more positive/emotional words are present in the word cloud, other more negative-leaning words were used more frequently. Overall, though, it does make sense than unverified users would feel more comfortable injecting more emotion (be it negative or positive) into their Tweets, whereas verified users may feel more of a responsibility to remain more neutral and Tweet the facts. 
 
-```
-
-### Wordcloud
 ```{r}
 
 set.seed(42)
@@ -249,11 +319,10 @@ ggplot(nonver_sent_nrc_cleaned[1:50,], aes(label = word,  size = n,color = senti
   geom_text_wordcloud(show.legend = TRUE) +
   theme_minimal()+ggtitle("Unverified")+theme(plot.title = element_text(hjust = 0.5))
 
-#alot of anticipation and political bc election
 ```
 
 ```{r}
-View(vax_data)
+
 vax_data_verified <- vax_data[vax_data$user_verified == "True",]
 vax_data_verified_clean <- tibble(tweet = vax_data_verified[,2])
 vax_data_unverified <- vax_data[vax_data$user_verified == "False",]
@@ -261,27 +330,26 @@ vax_data_unverified_clean <- tibble(tweet = vax_data_unverified[,2])
 
 ```
 
+
+## TF-IDF
+
+We did a Tf-Idf analysis on our data to determine the relative importance of words to the individual tweets of both types of users as compared to the overall corpus. In order to do this, we needed to identify what the individual documents were as well as the corpus we would be working with. Since our main objective was to discover the differences in sentiments between verified and unverified users, we decided to take the datasets of tweets of each type of user and use the entirety of the tweets combined as the corpus. The results show that the most important words written by unverified users in relation to the corpus as a whole are “postpone”, “tokyoolympics”, and “parisolympics”. These 3 words from the tweets have a tf-idf score of 1.0281e^-3, 1.0075e^-3, and 1.0075e^-3 respectively. Normally, the larger the tf-idf score is, the more rare the word is. Common words have a lower tf-idf score and so are not deemed as important to the documents and corpus since it does not tell us much.
+
+For verified users, the lowest tf-idf score found was for the word “peninsula” which had a score of 1.786974e-04. The rest of the scores were much higher for verified users. Putting this in context of our question, the tf-idf analysis did not provide very hard evidence of type of sentiment toward the COVID vaccine. However, unverified users seem to have more of an opinion. They could be pushing for postponing the olympics due to the pandemic, meaning the majority of these users would most likely be in favor of a vaccine and strict COVID measures. On the other hand, it could also be that they are pressed about the fact that the olympics might be postponed and are complaining about it. The sentiment analyses we ran in the first part of this project give a better idea of the actual sentiments of both types of users, but the important words we found through tf-idf also slightly support our case that unverified users are more emotional and tend to skew in one direction or the other, while verified users seem to have a neutral stance.
+
+
 ```{r}
 #Tf-idf
-#Here we are going to treat each of our tweets as a document in a corpus and explore the relative importance of words to these tweets as compared to the overall corpus. 
-
-#pulling up raw data 
-
-#write.csv(vax_data_verified_clean,"/Users/Student/Desktop//vervax.csv", row.names = FALSE )
-#write.csv(vax_data_unverified_clean,"/Users/Student/Desktop//nonvervax.csv", row.names = FALSE )
-
-ver_raw <- vax_data_verified_clean #as.tibble(read_lines("/Users/Student/Desktop//vervax.csv"))
-nonver_raw <- vax_data_unverified_clean #as.tibble(read_lines("/Users/Student/Desktop//nonvervax.csv"))
+print("getting here ")
+ver_raw <- vax_data_verified_clean 
+nonver_raw <- vax_data_unverified_clean 
 
 data_prep <- function(x,y,z){
   i <- as_tibble(t(x))#transposing the data set
   ii <- unite(i,"text",y:z,remove = TRUE,sep = "")
 }
 
-#get rid of NAs/keep only alphanumeric values
-#
 
-#nonver_vax$word = gsub("[^[:alnum:]]", "", nonver_vax$word)
 
 ver_vax_bag <- data_prep(ver_raw,'V1','V2174')
 ver_vax_bag$text <- gsub("[^[:alnum:][:space:]]", "", ver_vax_bag$text)
@@ -292,7 +360,7 @@ ver_vax_1 <- tibble(label,ver_vax)
 ver_vax_1$word = gsub("[^[:alnum:]]", "", ver_vax_1$word)
 ver_vax_1 <- ver_vax_1[-c(1, 2, 6, 7, 17), ]
 
-nonver_vax_bag <- data_prep(nonver_raw, 'V1','V27823')
+nonver_vax_bag <- data_prep(nonver_raw, 'V1','V27826')
 nonver_vax_bag$text <- gsub("[^[:alnum:][:space:]]", "", nonver_vax_bag$text)
 
 label <- "unverified"
@@ -323,22 +391,30 @@ tweets <- tweets %>%
 
 ```
 
+<center>
+![](/Users/aishgav/Downloads/tf-idf_table.png){width=70%}
+</center>
 
 # Summary
 
-Background and Previous Research: 
-Previous research: Misinformation relating to COVID-19 and the COVID-19 vaccine has been a salient issue since the onset of the pandemic. One major way that this misinformation has spread has been through social media channels such as Facebook and Twitter. In 2020, BBC reported that “social media has been a fertile ground for [Covid-19] conspiracy theories”(https://www.littlelaw.co.uk/2021/01/16/littlelaw-looks-atmisinformation-and-the-covid-19-vaccine/). 
 
-Having been aware of this as users of social media, we decided to examine a dataset of Tweets from 2020 relating to the COVID-19 vaccine. We wanted to see if there are differences in sentiment towards the vaccine among different groups (verified v non-verified individuals). We figured that sentiment analysis, paired with our background knowledge and other research on the topic, could prove to be a useful tool in diving further into the types of narratives being spread on social media, regarding COVID-19 vaccines. 
 
-Methods:
-We began with a dataframe of over 300,000 tweets that contain the hashtag: #CovidVaccine. We decided that we won’t need nearly 300,000 rows for our analysis - this would be far too computationally expensive. We decided to cut down our dataset to 30,000 rows, essentially by 10%. We did some data cleaning, and took out the columns we didn’t need. We moved forward with only the columns that contain the Tweet text, and one that states whether or not the user is verified on Twitter. We made 2 dataframes: one for verified users, and one for unverified users. W e used 3 different types of sentiment analysis. We decided to do this so that we could represent the sentiments both numerically and categorically, as well as examine sentiments of different strengths. For example, we could use simple negative/positive categories for each word in the Tweets, or we could look at a range of sentiments, such as joy, fear, anticipation, etc. 
-Once we performed the sentiment analysis, we decided to create graphs to help visualize the output. We created histograms and wordclouds. 
-
-Fairness Assessment: 
+## Fairness Assessment 
 We do not believe that we need to conduct a fairness assessment for this project. The classes we used here are verified vs. unverified Twitter users, which is not a protected class in society.
 
-# Analysis 
+## Conclusion
+
+Verified users had mildly positive and/or negative sentiments overall. More specifically, not a lot of strong-sentiment tweets existed in either the positive or negative direction. In terms of specific sentiments, many tweets included sentiments of trust and anticipation. Anticipation due to the fact that the vaccine hadn’t been rolled out on a mass scale at the time of these tweets. We also tend to see more trust of the vaccine from public figures -- a pattern we’ve noticed as we are now in late 2021. We also noticed that some of these verified users spoke about the vaccine in a political context, without expressing strong polarizing sentiments about the vaccine. 
+
+From the start, we could see that sentiments in tweets from unverified users about the COVID vaccine skewed more negatively, albeit not to an extreme extent. Along with these negative sentiments, there was a mix of the types of sentiments: trust, anger, fear, and sadness. We believe that these sentiments could be about the vaccine and/or the pandemic in general. It also seemed like there were more ‘emotional’ words used by unverified users, which we saw in the word cloud. 
+
+Some limitations of our analysis include not taking into account who exactly the users are, which we could have figured out or done some sentiment analysis using the user_description column from the original data. This would've been useful in figuring out whether a verified user was a political figure or not as political figures would have more polarizing opinions. Another limitation of our analysis is that it doesn't take into account tweets that are either in a different language or tweets that contain media such as pictures, gifs, or videos.  
+
+
+## Future Work 
+
+Initially, we wanted to split Tweets up into different regions of the world. We believed that it would have been interesting to examine if different regions had differences in sentiment towards the vaccine, and explore how differing levels of access to both the vaccine and information about the vaccine could tie into potential sentiment differences. However, this proved too difficult for the scope of our project here. The location data that we got from Twitter is put in by the user, which means that many locations were written differently or spelled uniquely, and were either very specific (name of a city or state) or very broad (entire continent). Additionally, some people put sarcastic comments or emojis in the location section, so that adds another complication. If there is a better way to divide tweets by location that doesn’t involve going through each row to see how it was spelled/worded, that could be a really interesting avenue of study. 
+
 
 
 
