@@ -144,9 +144,9 @@ head(nonver_vax)
 
 
 **User Followers:** 
-```{r}
+```{r, include = FALSE}
 # Looking at differences in followers for verified vs. unverified users 
-vax_data%>%
+orig_vax_data%>%
   group_by(user_verified)%>%
   summarize(mean_followers = mean(user_followers))
 ```
@@ -154,10 +154,10 @@ Here, we see that, on average, verified users have far more followers than unver
 
 
 **User Favorites:**
-```{r}
-vax_data$user_favourites = as.numeric(vax_data$user_favourites)
+```{r, include = FALSE}
+orig_vax_data$user_favourites = as.numeric(orig_vax_data$user_favourites)
 
-vax_data%>%
+orig_vax_data%>%
   group_by(user_verified)%>%
   summarize(mean_faves = mean(user_favourites))
 ```
