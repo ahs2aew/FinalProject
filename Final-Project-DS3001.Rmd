@@ -330,6 +330,7 @@ vax_data_unverified_clean <- tibble(tweet = vax_data_unverified[,2])
 
 ```
 
+# Evaluation of Model
 
 ## TF-IDF
 
