@@ -57,7 +57,7 @@ We began with a data frame of over 300,000 tweets. We decided that we won’t ne
 
 ```{r, echo = F, results = 'hide', messages='hide'}
 # import data
-vax_data = read.csv("/Users/aishgav/Desktop/ds3001/covidvaccine.csv")
+vax_data = read.csv("/Users/Anna/Downloads/covidvaccine.csv")
 vax_data = vax_data[vax_data$user_verified == "True" | vax_data$user_verified == "False", ] 
 orig_vax_data = vax_data
 orig_vax_data$user_favourites <- as.numeric(orig_vax_data$user_favourites)
@@ -141,6 +141,27 @@ head(ver_vax)
 head(nonver_vax)
 
 ```
+
+
+**User Followers:** 
+```{r}
+# Looking at differences in followers for verified vs. unverified users 
+vax_data%>%
+  group_by(user_verified)%>%
+  summarize(mean_followers = mean(user_followers))
+```
+Here, we see that, on average, verified users have far more followers than unverified users. This tells us that verified users have a broader reach through Twitter, which may impact the way they speak about topics such as the vaccine: maybe they will be less likely to express more emotional or polarizing statements. 
+
+
+**User Favorites:**
+```{r}
+vax_data$user_favourites = as.numeric(vax_data$user_favourites)
+
+vax_data%>%
+  group_by(user_verified)%>%
+  summarize(mean_faves = mean(user_favourites))
+```
+This tibble shows that unverified users, on average, have more favorites than verified users. This variable is referring to how many Tweets that user has favorited (liked), instead of how many favorites the Twitter user has receieved on their own Tweets. Unverified users may be favoriting more tweets because they feel more comfortable expressing support for a wider range of Tweets, and they potentially have fewer qualms about how they are being perceived as an online figure. We believe that these concerns about one's perception as an online figure (for verified users) could translate into different sentiments for their tweets relating to the COVID-19 vaccine: maybe weaker, less emotional sentiments. 
 
 
 
